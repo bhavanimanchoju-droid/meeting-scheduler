@@ -45,7 +45,90 @@ async function createMeeting(data) {
 
     return meeting;
     }
+async function getMeetings(filters) {
+  const where = {};
 
-    module.exports = {
-    createMeeting,
+  if (filters.userId) {
+    where.userId = filters.userId;
+  }
+
+  if (filters.startDate && filters.endDate) {
+    where.startTime = {
+      [Op.gte]: filters.startDate,
     };
+    where.endTime = {
+      [Op.lte]: filters.endDate,
+    };
+  }
+
+  return Meeting.findAll({ where });
+}
+
+async function getMeetingById(id) {
+  const meeting = await Meeting.findByPk(id);
+
+  if (!meeting) {
+    const error = new Error("Meeting not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return meeting;
+}
+
+async function updateMeeting(id, data) {
+  const meeting = await Meeting.findByPk(id);
+
+  if (!meeting) {
+    const error = new Error("Meeting not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const startTime = data.startTime || meeting.startTime;
+  const endTime = data.endTime || meeting.endTime;
+
+  if (new Date(startTime) >= new Date(endTime)) {
+    const error = new Error("Start time must be before end time");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const conflict = await Meeting.findOne({
+    where: {
+      userId: meeting.userId,
+      id: { [Op.ne]: id },
+      startTime: { [Op.lt]: endTime },
+      endTime: { [Op.gt]: startTime },
+    },
+  });
+
+  if (conflict) {
+    const error = new Error("Time slot already booked");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  await meeting.update(data);
+  return meeting;
+}
+
+async function deleteMeeting(id) {
+  const meeting = await Meeting.findByPk(id);
+
+  if (!meeting) {
+    const error = new Error("Meeting not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await meeting.destroy();
+}
+
+module.exports = {
+  createMeeting,
+  getMeetings,
+  getMeetingById,
+  updateMeeting,
+  deleteMeeting,
+};
