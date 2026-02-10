@@ -1,12 +1,14 @@
 const sequelize = require("./config/database");
+const User = require("./modules/meeting/model/user.model");
 
-async function testConnection() {
+async function start() {
   try {
     await sequelize.authenticate();
-    console.log("Database connected successfully");
+    await sequelize.sync();
+    console.log("Database synced");
   } catch (error) {
-    console.error("Unable to connect to database:", error);
+    console.error(error);
   }
 }
 
-testConnection();
+start();
