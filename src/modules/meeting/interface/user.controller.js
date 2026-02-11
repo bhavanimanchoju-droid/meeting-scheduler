@@ -18,7 +18,17 @@ async function getUser(req, res, next) {
   }
 }
 
+async function deleteUser(req, res, next) {
+  try {
+    await userService.deleteUser(req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createUser,
   getUser,
+  deleteUser,
 };

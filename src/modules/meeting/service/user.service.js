@@ -32,7 +32,20 @@ async function getUserById(id) {
   return user;
 }
 
+async function deleteUser(id) {
+  const user = await User.findByPk(id);
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await user.destroy();
+}
+
 module.exports = {
   createUser,
   getUserById,
+  deleteUser,
 };
